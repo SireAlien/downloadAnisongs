@@ -116,7 +116,7 @@ def downloadMp3FromTitles_ID_SongType(title1, title2, idList, songType, language
     return success
 
 if __name__ == "__main__":
-    title = input("Anime title: ")
+    title = input("Query: ")
     songType = songTypes[input("Song type (ALL, OP, ED, IN): ")]
     filepath = input("File path to save songs (default is current directory): ") or "./"
     language = input("Language for filename (JP, EN): ")
