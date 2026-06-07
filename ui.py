@@ -5,7 +5,7 @@ from tkinter import messagebox
 from tkinter import filedialog
 
 root = Tk()
-root.geometry('800x450')
+root.geometry('800x600')
 root.title('Download AniSongs')
 
 def onSelectDirectoryChangeButtonText(directoryButton):
@@ -15,8 +15,9 @@ def onSelectDirectoryChangeButtonText(directoryButton):
 
 def onLoadButtonClick( ):
     for widget in gridFrame.grid_slaves():
-        if int(widget.grid_info()["row"]):
-            widget.destroy()
+        widget.destroy()
+    for widget in pagingFrame.grid_slaves():
+        widget.destroy()
 
     title = titleEntry.get()
     language = f"anime{languageCombo.get()}Name"
@@ -30,8 +31,8 @@ def onLoadButtonClick( ):
     #create a grid row for each song with a download button
     for i, song in enumerate(songs):
         songRecords.append({
-            "title": ttk.Label(gridFrame, text = song["title"]),
-            "name": ttk.Label(gridFrame, text = song["name"]),
+            "title": ttk.Label(gridFrame, text = song["title"], wraplength=200),
+            "name": ttk.Label(gridFrame, text = song["name"], wraplength=200),
             "type": ttk.Label(gridFrame, text = song["type"]),
             "downloadButton": ttk.Button(gridFrame, text = "Download", command = lambda link=song: fs.downloadMp3FromLink(link, filedialogButton.cget("text")))
         })
@@ -51,8 +52,8 @@ def onNextPageButtonClick(songRecords, index, prevButton, nextButton):
     for widget in gridFrame.grid_slaves():
         widget.grid_forget()
     for i, record in enumerate(songRecords[index:index+10]):
-        record["title"].grid(column = 0, row = i)
-        record["name"].grid(column = 1, row = i)
+        record["title"].grid(column = 0, row = i, sticky = "w")
+        record["name"].grid(column = 1, row = i, sticky = "w")
         record["type"].grid(column = 2, row = i)
         record["downloadButton"].grid(column = 3, row = i)
 
@@ -67,8 +68,8 @@ def onPrevPageButtonClick(songRecords, index, prevButton, nextButton):
     for widget in gridFrame.grid_slaves():
         widget.grid_forget()
     for i, record in enumerate(songRecords[index:index+10]):
-        record["title"].grid(column = 0, row = i)
-        record["name"].grid(column = 1, row = i)
+        record["title"].grid(column = 0, row = i, sticky = "w")
+        record["name"].grid(column = 1, row = i, sticky = "w")
         record["type"].grid(column = 2, row = i)
         record["downloadButton"].grid(column = 3, row = i)
     
@@ -86,8 +87,11 @@ def onPrevPageButtonClick(songRecords, index, prevButton, nextButton):
 
 menuFrame = ttk.Frame(root)
 gridFrame = ttk.Frame(root)
+gridFrame.grid_columnconfigure(0, pad=10, minsize=200)
+gridFrame.grid_columnconfigure(1, pad=10, minsize=200)
+gridFrame.grid_columnconfigure(2, pad=5)
 pagingFrame = ttk.Frame(root)
-menuFrame.grid(column = 0, row = 0, sticky = "w")
+menuFrame.grid(column = 0, row = 0, sticky = "nw")
 gridFrame.grid(column = 0, row = 1, sticky = "w")
 pagingFrame.grid(column = 0, row = 2, sticky = "sw")
 ttk.Label(menuFrame, text = "Query:").grid(column = 0, row = 0)
