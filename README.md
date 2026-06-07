@@ -12,6 +12,7 @@ To use the graphical interface, launch ui.py.
 ### Fields 
 * Query: arguments for search, namely title, song name, artist, composer.
 * Language: the name of the anime titles will be displayed in this language. Files will also be saved in this language.
+* Song Type: choose all results or filter by openings, endings, inserts. 
 * File path to save songs: self explainatory.
 
 ### Download
