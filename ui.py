@@ -3,6 +3,7 @@ from tkinter import Tk
 from tkinter import ttk
 from tkinter import messagebox
 from tkinter import filedialog
+from threading import Thread
 
 root = Tk()
 root.geometry('800x600')
@@ -13,7 +14,13 @@ def onSelectDirectoryChangeButtonText(directoryButton):
     if directory:
         directoryButton.config(text=directory)
 
+def downloadMp3FromLink_Thread(link, path = "./"):
+    Thread(target=lambda: fs.downloadMp3FromLink(link, path)).start()
+
 def onLoadButtonClick( ):
+    Thread(target=onLoadButtonClick_Thread).start()
+
+def onLoadButtonClick_Thread( ):
     for widget in gridFrame.grid_slaves():
         widget.destroy()
     for widget in pagingFrame.grid_slaves():
@@ -26,6 +33,9 @@ def onLoadButtonClick( ):
         messagebox.showerror("Error", "Please enter an anime title.")
         return
 
+    loadingMessage = ttk.Label(gridFrame, text = "Loading...")
+    loadingMessage.grid(column = 0, row = 0)
+
     songs = fs.getMp3ListFromSongList(fs.getSongsFromTitle_SongType(title, song_type), language)
     songRecords = []
     #create a grid row for each song with a download button
@@ -34,21 +44,25 @@ def onLoadButtonClick( ):
             "title": ttk.Label(gridFrame, text = song["title"], wraplength=200),
             "name": ttk.Label(gridFrame, text = song["name"], wraplength=200),
             "type": ttk.Label(gridFrame, text = song["type"]),
-            "downloadButton": ttk.Button(gridFrame, text = "Download", command = lambda link=song: fs.downloadMp3FromLink(link, filedialogButton.cget("text")))
+            "downloadButton": ttk.Button(gridFrame, text = "Download", command = lambda link=song: downloadMp3FromLink_Thread(link, filedialogButton.cget("text")))
         })
+
+    loadingMessage.destroy()
 
     #create buttons to cycle between pages of results if there are more than 10 songs
     prevButton = ttk.Button(pagingFrame, text = "<<", state = "disabled")
     nextButton = ttk.Button(pagingFrame, text = ">>", state = "disabled")
+    pageIndex = ttk.Label(pagingFrame, text = "Page 1")
 
-    onNextPageButtonClick(songRecords, 0, prevButton, nextButton)
+    onNextPageButtonClick(songRecords, 0, prevButton, nextButton, pageIndex)
     if len(songRecords) > 10:
-        prevButton.config(command = lambda: onPrevPageButtonClick(songRecords, 0, prevButton, nextButton))
-        nextButton.config(command = lambda: onNextPageButtonClick(songRecords, 10, prevButton, nextButton))
+        prevButton.config(command = lambda: onPrevPageButtonClick(songRecords, 0, prevButton, nextButton, pageIndex))
+        nextButton.config(command = lambda: onNextPageButtonClick(songRecords, 10, prevButton, nextButton, pageIndex))
         prevButton.grid(column = 0, row = 0)
-        nextButton.grid(column = 1, row = 0)
+        pageIndex.grid(column = 1, row = 0)
+        nextButton.grid(column = 2, row = 0)
 
-def onNextPageButtonClick(songRecords, index, prevButton, nextButton):
+def onNextPageButtonClick(songRecords, index, prevButton, nextButton, pageIndex):
     for widget in gridFrame.grid_slaves():
         widget.grid_forget()
     for i, record in enumerate(songRecords[index:index+10]):
@@ -56,15 +70,15 @@ def onNextPageButtonClick(songRecords, index, prevButton, nextButton):
         record["name"].grid(column = 1, row = i, sticky = "w")
         record["type"].grid(column = 2, row = i)
         record["downloadButton"].grid(column = 3, row = i)
-
+    pageIndex.config(text = f"Page {index//10 + 1}")
     if index >= 10:
-        prevButton.config(state = "normal", command = lambda: onPrevPageButtonClick(songRecords, index-10, prevButton, nextButton))
+        prevButton.config(state = "normal", command = lambda: onPrevPageButtonClick(songRecords, index-10, prevButton, nextButton, pageIndex))
     if index + 10 < len(songRecords):
-        nextButton.config(state = "normal", command = lambda: onNextPageButtonClick(songRecords, index+10, prevButton, nextButton))
+        nextButton.config(state = "normal", command = lambda: onNextPageButtonClick(songRecords, index+10, prevButton, nextButton, pageIndex))
     else:
         nextButton.config(state = "disabled")
 
-def onPrevPageButtonClick(songRecords, index, prevButton, nextButton):
+def onPrevPageButtonClick(songRecords, index, prevButton, nextButton, pageIndex):
     for widget in gridFrame.grid_slaves():
         widget.grid_forget()
     for i, record in enumerate(songRecords[index:index+10]):
@@ -73,13 +87,14 @@ def onPrevPageButtonClick(songRecords, index, prevButton, nextButton):
         record["type"].grid(column = 2, row = i)
         record["downloadButton"].grid(column = 3, row = i)
     
+    pageIndex.config(text = f"Page {index//10 + 1}")
     if index >= 10:
-        prevButton.config(state = "normal", command = lambda: onPrevPageButtonClick(songRecords, index-10, prevButton, nextButton))
+        prevButton.config(state = "normal", command = lambda: onPrevPageButtonClick(songRecords, index-10, prevButton, nextButton, pageIndex))
     else:
         prevButton.config(state = "disabled")
 
     if index + 10 < len(songRecords):
-        nextButton.config(state = "normal", command = lambda: onNextPageButtonClick(songRecords, index+10, prevButton, nextButton))
+        nextButton.config(state = "normal", command = lambda: onNextPageButtonClick(songRecords, index+10, prevButton, nextButton, pageIndex))
     else:
         nextButton.config(state = "disabled")
 
