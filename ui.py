@@ -3,6 +3,7 @@ from tkinter import Tk
 from tkinter import ttk
 from tkinter import messagebox
 from tkinter import filedialog
+from tkinter import IntVar
 from threading import Thread
 
 root = Tk()
@@ -13,12 +14,20 @@ def onSelectDirectoryChangeButtonText(directoryButton):
     directory = filedialog.askdirectory()
     if directory:
         directoryButton.config(text=directory)
+        toggleLoadButtonState()
 
 def downloadMp3FromLink_Thread(link, path = "./"):
     Thread(target=lambda: fs.downloadMp3FromLink(link, path)).start()
 
 def onLoadButtonClick( ):
     Thread(target=onLoadButtonClick_Thread).start()
+
+def toggleLoadButtonState():
+    if op.get() == 1 or ed.get() == 1 or ins.get() == 1:
+        if filedialogButton.cget("text") != "Browse":
+            loadButton.config(state = "normal")
+    else:
+        loadButton.config(state = "disabled")
 
 def onLoadButtonClick_Thread( ):
     for widget in gridFrame.grid_slaves():
@@ -28,7 +37,14 @@ def onLoadButtonClick_Thread( ):
 
     title = titleEntry.get()
     language = f"anime{languageCombo.get()}Name"
-    song_type = fs.songTypes[songTypeCombo.get()]
+    song_types = []
+    if op.get() == 1:
+        song_types.append("Opening")
+    if ed.get() == 1:
+        song_types.append("Ending")
+    if ins.get() == 1:
+        song_types.append("Insert")
+
     if not title:
         messagebox.showerror("Error", "Please enter an anime title.")
         return
@@ -36,7 +52,7 @@ def onLoadButtonClick_Thread( ):
     loadingMessage = ttk.Label(gridFrame, text = "Loading...")
     loadingMessage.grid(column = 0, row = 0)
 
-    songs = fs.getMp3ListFromSongList(fs.getSongsFromTitle_SongType(title, song_type), language)
+    songs = fs.getMp3ListFromSongList(fs.getSongsFromTitle_SongTypes(title, song_types), language)
     songRecords = []
     #create a grid row for each song with a download button
     for i, song in enumerate(songs):
@@ -112,20 +128,27 @@ pagingFrame.grid(column = 0, row = 2, sticky = "sw")
 ttk.Label(menuFrame, text = "Query:").grid(column = 0, row = 0)
 titleEntry = ttk.Entry(menuFrame, width = 30)
 titleEntry.grid(column = 1, row = 0)
-ttk.Label(menuFrame, text = "Language:").grid(column = 0, row = 3)
+ttk.Label(menuFrame, text = "Language:").grid(column = 0, row = 1)
 languageCombo = ttk.Combobox(menuFrame, values=["JP", "EN"], state="readonly")
 languageCombo.current(0)
-languageCombo.grid(column = 1, row = 3)
-ttk.Label(menuFrame, text = "Song Type:").grid(column = 0, row = 4)
-songTypeCombo = ttk.Combobox(menuFrame, values=["ALL", "OP", "ED", "IN"], state="readonly")
-songTypeCombo.current(0)
-songTypeCombo.grid(column = 1, row = 4)
-ttk.Label(menuFrame, text = "File path to save songs:").grid(column = 0, row = 5)
+languageCombo.grid(column = 1, row = 1)
+ttk.Label(menuFrame, text = "Song Type:").grid(column = 0, row = 2)
+songTypeFrame = ttk.Frame(menuFrame)
+songTypeFrame.grid(column = 1, row = 2)
+op = IntVar(value=0)
+ed = IntVar(value=0)
+ins = IntVar(value=0)
+OPCheckButton = ttk.Checkbutton(songTypeFrame, text = "OP", command=toggleLoadButtonState, variable=op)
+EDCheckButton = ttk.Checkbutton(songTypeFrame, text = "ED", command=toggleLoadButtonState, variable=ed)
+INCheckButton = ttk.Checkbutton(songTypeFrame, text = "IN", command=toggleLoadButtonState, variable=ins)
+OPCheckButton.grid(column = 0, row = 0, sticky="w")
+EDCheckButton.grid(column = 1, row = 0)
+INCheckButton.grid(column = 2, row = 0, sticky="e")
+ttk.Label(menuFrame, text = "File path to save songs:").grid(column = 0, row = 3)
 filedialogButton = ttk.Button(menuFrame, text = "Browse", command = lambda: onSelectDirectoryChangeButtonText(filedialogButton))
-filedialogButton.grid(column = 1, row = 5)
-loadButton = ttk.Button(menuFrame, text = "Load results", command = onLoadButtonClick)
-loadButton.grid(column = 0, row = 6)
-loadButton = ttk.Label(menuFrame, text = "")
+filedialogButton.grid(column = 1, row = 3)
+loadButton = ttk.Button(menuFrame, text = "Load results", command = onLoadButtonClick, state="disabled")
+loadButton.grid(column = 0, row = 4)
 
 
 root.mainloop()   
